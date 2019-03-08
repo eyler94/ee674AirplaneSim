@@ -104,6 +104,9 @@ class mav_dynamics:
         # update the airspeed, angle of attack, and side slip angles using new state
         self._update_velocity_data(wind)
 
+        # update sensors
+        self.update_sensors()
+
         # update the message class for the true state
         self._update_msg_true_state()
 
