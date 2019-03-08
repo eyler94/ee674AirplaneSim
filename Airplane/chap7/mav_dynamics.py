@@ -104,9 +104,6 @@ class mav_dynamics:
         # update the airspeed, angle of attack, and side slip angles using new state
         self._update_velocity_data(wind)
 
-        # update sensors
-        self.update_sensors()
-
         # update the message class for the true state
         self._update_msg_true_state()
 
@@ -127,21 +124,19 @@ class mav_dynamics:
         self.sensors.gyro_z = r + B_gyro_z + eta_gyro_z
 
         ### Accel sensors
-        u_dot = self.ud
-        v_dot = self.vd
-        w_dot = self.wd
-        u = self._state.item(3)
-        v = self._state.item(4)
-        w = self._state.item(5)
+        fx = self._forces.item(0)
+        fy = self._forces.item(1)
+        fz = self._forces.item(2)
+        mass = MAV.mass
         phi = self.msg_true_state.phi
         theta = self.msg_true_state.theta
         psi = self.msg_true_state.psi
         eta_accel_x = np.random.randn()*SENSOR.accel_sigma
         eta_accel_y = np.random.randn()*SENSOR.accel_sigma
         eta_accel_z = np.random.randn()*SENSOR.accel_sigma
-        self.sensors.accel_x = u_dot + q*w - r*v + MAV.gravity*np.sin(theta) + eta_accel_x
-        self.sensors.accel_y = v_dot + r*u - p*w + MAV.gravity*np.cos(theta)*np.sin(phi) + eta_accel_y
-        self.sensors.accel_z = w_dot + p*v - q*u + MAV.gravity*np.cos(theta)*np.cos(phi) + eta_accel_z
+        self.sensors.accel_x = fx/mass + MAV.gravity*np.sin(theta) + eta_accel_x
+        self.sensors.accel_y = fy/mass + MAV.gravity*np.cos(theta)*np.sin(phi) + eta_accel_y
+        self.sensors.accel_z = fz/mass + MAV.gravity*np.cos(theta)*np.cos(phi) + eta_accel_z
 
         ### Pressure sensors
         B_abs = 0.
@@ -149,6 +144,7 @@ class mav_dynamics:
         eta_abs = np.random.randn()*SENSOR.static_pres_sigma
         eta_diff = np.random.randn()*SENSOR.diff_pres_sigma
         self.sensors.static_pressure = MAV.rho*MAV.gravity*self.msg_true_state.h + B_abs + eta_abs
+        print("static pressure:", self.sensors.static_pressure)
         self.sensors.diff_pressure = MAV.rho*self.msg_true_state.Va**2./2. + B_diff + eta_diff
 
         if self._t_gps >= SENSOR.ts_gps:

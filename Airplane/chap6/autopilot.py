@@ -74,8 +74,6 @@ class autopilot:
         delta_e = self.pitch_from_elevator.update_with_rate(theta_c, state.theta, state.q)
         # delta_t =  3.14346798e-01 # Trim state
         delta_t = self.airspeed_from_throttle.update(cmd.airspeed_command, state.Va)
-        print("Delta_T:", delta_t)
-
 
         # construct output and commanded states
         delta = np.array([[delta_e], [delta_t], [delta_a], [delta_r]])
