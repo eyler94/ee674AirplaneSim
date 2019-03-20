@@ -9,7 +9,7 @@ sigma = 0.05
 Va0 = MAV.Va0
 
 #----------roll loop-------------
-wn_phi = 5.
+wn_phi = 25.
 zeta_phi = 0.707
 a_phi_2 = 130.6
 a_phi_1 = 22.6
@@ -33,7 +33,7 @@ sideslip_kp = 1 #Fix this later, too
 # yaw_damper_kp =
 
 #----------pitch loop-------------
-wn_theta = 20
+wn_theta = 15
 zeta_theta = 0.8
 
 a_theta_1 = 5.288
@@ -45,8 +45,8 @@ pitch_kd = (2.*zeta_theta*wn_theta - a_theta_1)/a_theta_3
 K_theta_DC = pitch_kp*a_theta_3/wn_theta**2.
 
 #----------altitude loop-------------
-zeta_h = 0.707
-wn_h = 1
+zeta_h = 0.8
+wn_h = 0.5
 
 altitude_kp = (2.*zeta_h*wn_h)/(K_theta_DC*Va0)
 altitude_ki = (wn_h**2.)/(K_theta_DC*Va0)

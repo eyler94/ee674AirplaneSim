@@ -61,11 +61,9 @@ class pid_control:
 
     def update_with_rate(self, y_ref, y, ydot, reset_flag=False):
         error = y_ref - y
-
         self.integrateError(error)
 
         u_unsat = self.kp * error + self.ki * self.integrator - self.kd * ydot
-
         u_sat = self._saturate(u_unsat)
 
         self.integratorAntiWindup(u_sat, u_unsat)
@@ -75,10 +73,6 @@ class pid_control:
     def integrateError(self, error):
         self.integrator = self.integrator + (self.Ts/2.)*(error + self.error_d1)
         self.error_d1 = error
-
-    # def differentiateError(self, error):
-    #     self.error_dot = self.beta*self.error_dot + (1.-self.beta)*((error-self.error_d1)/self.Ts)
-    #     self.error_d1 = error
 
     def differentiateY(self, y):
         self.y_dot = self.beta*self.y_dot + (1.-self.beta)*((y-self.y_d1)/self.Ts)
@@ -102,46 +96,3 @@ class pid_control:
         else:
             u_sat = u
         return u_sat
-#
-# class pi_control:
-#     def __init__(self, kp=0.0, ki=0.0, Ts=0.01, limit=1.0):
-#         self.kp = kp
-#         self.ki = ki
-#         self.Ts = Ts
-#         self.limit = limit
-#         self.integrator = 0.0
-#         self.error_delay_1 = 0.0
-#
-#     def update(self, y_ref, y):
-#         return u_sat
-#
-#     def _saturate(self, u):
-#         # saturate u at +- self.limit
-#         if u >= self.limit:
-#             u_sat = self.limit
-#         elif u <= -self.limit:
-#             u_sat = -self.limit
-#         else:
-#             u_sat = u
-#         return u_sat
-#
-# class pd_control_with_rate:
-#     # PD control with rate information
-#     # u = kp*(yref-y) - kd*ydot
-#     def __init__(self, kp=0.0, kd=0.0, limit=1.0):
-#         self.kp = kp
-#         self.kd = kd
-#         self.limit = limit
-#
-#     def update(self, y_ref, y, ydot):
-#         return u_sat
-#
-#     def _saturate(self, u):
-#         # saturate u at +- self.limit
-#         if u >= self.limit:
-#             u_sat = self.limit
-#         elif u <= -self.limit:
-#             u_sat = -self.limit
-#         else:
-#             u_sat = u
-#         return u_sat

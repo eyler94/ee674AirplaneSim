@@ -3,7 +3,7 @@ from state_plotter.plotter_args import *
 
 class data_viewer:
     def __init__(self):
-        time_window_length=100
+        time_window_length=1000
         self.plotter = Plotter(plotting_frequency=100, # refresh plot every 100 time steps
                                time_window=time_window_length)  # plot last time_window seconds of data
         # set up the plot window

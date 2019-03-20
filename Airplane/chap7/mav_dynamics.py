@@ -1,11 +1,11 @@
 """
-mavDynamics 
+mavDynamics
     - this file implements the dynamic equations of motion for MAV
     - use unit quaternion for the attitude state
-    
+
 mavsim_python
     - Beard & McLain, PUP, 2012
-    - Update history:  
+    - Update history:
         2/16/2019 - RWB
 """
 import sys
@@ -135,8 +135,8 @@ class mav_dynamics:
         eta_accel_y = np.random.randn()*SENSOR.accel_sigma
         eta_accel_z = np.random.randn()*SENSOR.accel_sigma
         self.sensors.accel_x = fx/mass + MAV.gravity*np.sin(theta) + eta_accel_x
-        self.sensors.accel_y = fy/mass + MAV.gravity*np.cos(theta)*np.sin(phi) + eta_accel_y
-        self.sensors.accel_z = fz/mass + MAV.gravity*np.cos(theta)*np.cos(phi) + eta_accel_z
+        self.sensors.accel_y = fy/mass - MAV.gravity*np.cos(theta)*np.sin(phi) + eta_accel_y
+        self.sensors.accel_z = fz/mass - MAV.gravity*np.cos(theta)*np.cos(phi) + eta_accel_z
 
         ### Pressure sensors
         B_abs = 0.
@@ -144,7 +144,6 @@ class mav_dynamics:
         eta_abs = np.random.randn()*SENSOR.static_pres_sigma
         eta_diff = np.random.randn()*SENSOR.diff_pres_sigma
         self.sensors.static_pressure = MAV.rho*MAV.gravity*self.msg_true_state.h + B_abs + eta_abs
-        print("static pressure:", self.sensors.static_pressure)
         self.sensors.diff_pressure = MAV.rho*self.msg_true_state.Va**2./2. + B_diff + eta_diff
 
         if self._t_gps >= SENSOR.ts_gps:
