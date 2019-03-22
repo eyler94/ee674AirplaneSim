@@ -59,14 +59,17 @@ while sim_time < SIM.end_time:
     estimated_state = obsv.update(measurements)  # estimate states from measurements
 
     #-------path follower-------------
-    # autopilot_commands = path_follow.update(path, estimated_state)
     autopilot_commands = path_follow.update(path, mav.msg_true_state)  # for debugging
+    # autopilot_commands = path_follow.update(path, estimated_state)
 
     #-------controller-------------
-    delta, commanded_state = ctrl.update(autopilot_commands, estimated_state)
+    delta, commanded_state = ctrl.update(autopilot_commands, mav.msg_true_state) # for debugging
+    # delta, commanded_state = ctrl.update(autopilot_commands, estimated_state)
 
     #-------physical system-------------
     current_wind = wind.update()  # get the new wind vector
+    print("wind:", current_wind)
+    mav.update_state(delta, np.array([[0., 0., 0., 0., 0., 0.]]).T) # for debugging
     mav.update_state(delta, current_wind)  # propagate the MAV dynamics
     mav.update_sensors()
 
