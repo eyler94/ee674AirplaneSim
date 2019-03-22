@@ -46,15 +46,15 @@ K_theta_DC = pitch_kp*a_theta_3/wn_theta**2.
 
 #----------altitude loop-------------
 zeta_h = 0.8
-wn_h = 0.5
+wn_h = 0.15
 
 altitude_kp = (2.*zeta_h*wn_h)/(K_theta_DC*Va0)
 altitude_ki = (wn_h**2.)/(K_theta_DC*Va0)
 altitude_zone = 10
 
 #---------airspeed hold using throttle---------------
-wn_v = 1
-zeta_v = 0.707
+wn_v = 0.25
+zeta_v = 0.8#707
 a_v_1 = 0.6607
 a_v_2 = 47.02
 

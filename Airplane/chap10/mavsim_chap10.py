@@ -1,29 +1,29 @@
 """
 mavsim_python
-    - Chapter 8 assignment for Beard & McLain, PUP, 2012
+    - Chapter 10 assignment for Beard & McLain, PUP, 2012
     - Last Update:
-        2/21/2019 - RWB
+        3/11/2019 - RWB
 """
 import sys
 sys.path.append('..')
 import numpy as np
 import parameters.simulation_parameters as SIM
 
-from chap2.mav_viewer import mav_viewer
 from chap3.data_viewer import data_viewer
 from chap4.wind_simulation import wind_simulation
 from chap6.autopilot import autopilot
 from chap7.mav_dynamics import mav_dynamics
 from chap8.observer import observer
-from tools.signals import signals
+from chap10.path_follower import path_follower
+from chap10.path_viewer import path_viewer
 
 # initialize the visualization
-mav_view = mav_viewer()  # initialize the mav viewer
+path_view = path_viewer()  # initialize the viewer
 data_view = data_viewer()  # initialize view of data plots
 VIDEO = False  # True==write video, False==don't write video
 if VIDEO == True:
     from chap2.video_writer import video_writer
-    video = video_writer(video_name="chap8_video.avi",
+    video = video_writer(video_name="chap10_video.avi",
                          bounding_box=(0, 0, 1000, 1000),
                          output_rate=SIM.ts_video)
 
@@ -32,55 +32,38 @@ wind = wind_simulation(SIM.ts_simulation)
 mav = mav_dynamics(SIM.ts_simulation)
 ctrl = autopilot(SIM.ts_simulation)
 obsv = observer(SIM.ts_simulation)
+path_follow = path_follower()
 
-# autopilot commands
-from message_types.msg_autopilot import msg_autopilot
-commands = msg_autopilot()
-Va_command = signals(dc_offset=25.0, amplitude=0.0, start_time=2.0, frequency = 0.01)
-h_command = signals(dc_offset=100.0, amplitude=0.0, start_time=0.0, frequency = 0.02)
-chi_command = signals(dc_offset=np.radians(180), amplitude=np.radians(45), start_time=5.0, frequency = 0.015)
+# path definition
+from message_types.msg_path import msg_path
+path = msg_path()
+path.flag = 'line'
+#path.flag = 'orbit'
+if path.flag == 'line':
+    path.line_origin = np.array([[0.0, 0.0, -100.0]]).T
+    path.line_direction = np.array([[0.5, 1.0, 0.0]]).T
+    path.line_direction = path.line_direction / np.linalg.norm(path.line_direction)
+else:  # path.flag == 'orbit'
+    path.orbit_center = np.array([[0.0, 0.0, -100.0]]).T  # center of the orbit
+    path.orbit_radius = 300.0  # radius of the orbit
+    path.orbit_direction = 'CW'  # orbit direction: 'CW'==clockwise, 'CCW'==counter clockwise
 
 # initialize the simulation time
 sim_time = SIM.start_time
 
 # main simulation loop
 print("Press Command-Q to exit...")
-
-from message_types.msg_state import msg_state
-temp = msg_state()
-
 while sim_time < SIM.end_time:
-
-    #-------autopilot commands-------------
-    commands.airspeed_command = Va_command.square(sim_time)
-    commands.course_command = chi_command.square(sim_time)
-    commands.altitude_command = h_command.square(sim_time)
-
-    #-------controller-------------
-    # temp = mav.msg_true_state
+    #-------observer-------------
     measurements = mav.sensors  # get sensor measurements
     estimated_state = obsv.update(measurements)  # estimate states from measurements
 
-    # print("\n phi:", temp.phi)
-    # print("phi_e:", estimated_state.phi)
-    # print("theta:", temp.theta)
-    # print("theta_e:", estimated_state.theta)
+    #-------path follower-------------
+    # autopilot_commands = path_follow.update(path, estimated_state)
+    autopilot_commands = path_follow.update(path, mav.msg_true_state)  # for debugging
 
-    # if sim_time > 10.:
-    #     print("Handing over control.")
-    #     temp.p = estimated_state.p
-    #     temp.q = estimated_state.q
-    #     temp.r = estimated_state.r
-    #     temp.h = estimated_state.h
-    #     temp.Va = estimated_state.Va
-    #     # temp.phi = estimated_state.phi
-    #     # temp.theta = estimated_state.theta
-    # #
-    # # if sim_time > 11.:
-    # #     break
-
-    # delta, commanded_state = ctrl.update(commands, mav.msg_true_state)
-    delta, commanded_state = ctrl.update(commands, estimated_state)
+    #-------controller-------------
+    delta, commanded_state = ctrl.update(autopilot_commands, estimated_state)
 
     #-------physical system-------------
     current_wind = wind.update()  # get the new wind vector
@@ -88,7 +71,7 @@ while sim_time < SIM.end_time:
     mav.update_sensors()
 
     #-------update viewer-------------
-    mav_view.update(mav.msg_true_state)  # plot body of MAV
+    path_view.update(path, mav.msg_true_state)  # plot path and MAV
     data_view.update(mav.msg_true_state, # true states
                      estimated_state, # estimated states
                      commanded_state, # commanded states
