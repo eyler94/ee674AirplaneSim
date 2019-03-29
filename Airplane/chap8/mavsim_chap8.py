@@ -36,8 +36,8 @@ obsv = observer(SIM.ts_simulation)
 # autopilot commands
 from message_types.msg_autopilot import msg_autopilot
 commands = msg_autopilot()
-Va_command = signals(dc_offset=25.0, amplitude=0.0, start_time=2.0, frequency = 0.01)
-h_command = signals(dc_offset=100.0, amplitude=0.0, start_time=0.0, frequency = 0.02)
+Va_command = signals(dc_offset=25.0, amplitude=3.0, start_time=2.0, frequency = 0.01)
+h_command = signals(dc_offset=100.0, amplitude=15.0, start_time=0.0, frequency = 0.02)
 chi_command = signals(dc_offset=np.radians(180), amplitude=np.radians(45), start_time=5.0, frequency = 0.015)
 
 # initialize the simulation time
@@ -57,30 +57,28 @@ while sim_time < SIM.end_time:
     commands.altitude_command = h_command.square(sim_time)
 
     #-------controller-------------
-    # temp = mav.msg_true_state
     measurements = mav.sensors  # get sensor measurements
     estimated_state = obsv.update(measurements)  # estimate states from measurements
 
-    # print("\n phi:", temp.phi)
-    # print("phi_e:", estimated_state.phi)
-    # print("theta:", temp.theta)
-    # print("theta_e:", estimated_state.theta)
-
-    # if sim_time > 10.:
-    #     print("Handing over control.")
-    #     temp.p = estimated_state.p
-    #     temp.q = estimated_state.q
-    #     temp.r = estimated_state.r
-    #     temp.h = estimated_state.h
-    #     temp.Va = estimated_state.Va
-    #     # temp.phi = estimated_state.phi
-    #     # temp.theta = estimated_state.theta
-    # #
-    # # if sim_time > 11.:
-    # #     break
+    temp = mav.msg_true_state
+    temp.p = estimated_state.p
+    temp.q = estimated_state.q
+    temp.r = estimated_state.r
+    temp.h = estimated_state.h
+    temp.Va = estimated_state.Va
+    temp.phi = estimated_state.phi
+    temp.theta = estimated_state.theta
+    temp.pn = estimated_state.pn
+    temp.pe = estimated_state.pe
+    temp.Vg = estimated_state.Vg
+    temp.chi = estimated_state.chi
+    temp.wn = estimated_state.wn
+    temp.we = estimated_state.we
+    temp.psi = estimated_state.psi
 
     # delta, commanded_state = ctrl.update(commands, mav.msg_true_state)
-    delta, commanded_state = ctrl.update(commands, estimated_state)
+    # delta, commanded_state = ctrl.update(commands, estimated_state)
+    delta, commanded_state = ctrl.update(commands, temp)
 
     #-------physical system-------------
     current_wind = wind.update()  # get the new wind vector

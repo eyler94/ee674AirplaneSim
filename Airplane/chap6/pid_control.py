@@ -37,8 +37,10 @@ class pid_control:
 
         if reset_flag is True:
             if error > np.pi:
+                print("flipping positive")
                 error = error - 2.*np.pi
-            elif error < -np.pi:
+            elif error <= -np.pi:
+                print("flippin negative")
                 error = error + 2.*np.pi
 
         diffError = True # Set true if you want derivative to act on error instead of y
@@ -59,7 +61,7 @@ class pid_control:
 
         return u_sat
 
-    def update_with_rate(self, y_ref, y, ydot, reset_flag=False):
+    def update_with_rate(self, y_ref, y, ydot):
         error = y_ref - y
         self.integrateError(error)
 
