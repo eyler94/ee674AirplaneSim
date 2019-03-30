@@ -37,10 +37,14 @@ class pid_control:
 
         if reset_flag is True:
             if error > np.pi:
-                print("flipping positive")
-                error = error - 2.*np.pi
+                print("positively dumb")
             elif error <= -np.pi:
                 print("flippin negative")
+            while error > np.pi:
+                print("Correct positive")
+                error = error - 2.*np.pi
+            while error <= -np.pi:
+                print("Correct negative")
                 error = error + 2.*np.pi
 
         diffError = True # Set true if you want derivative to act on error instead of y
