@@ -70,7 +70,7 @@ class path_manager:
         wip1 = np.array([[waypoints.ned[0][self.ptr_next],waypoints.ned[1][self.ptr_next],waypoints.ned[2][self.ptr_next]]]).T
         qi_1 = (wi-wi_1)/np.linalg.norm(wi-wi_1)
         qi = (wip1-wi)/np.linalg.norm(wip1-wi)
-        varrho = np.arccos(-qi_1.T*qi)
+        varrho = np.arccos(float(-qi_1.T@qi))
         if self.manager_state == 1:
             self.path.flag = 'line'
             self.path.line_origin = wi_1
@@ -82,8 +82,10 @@ class path_manager:
         elif self.manager_state == 2:
             self.path.flag = 'orbit'
             self.path.orbit_center = wi - R/np.sin(varrho/2.)*(qi_1-qi)/np.linalg.norm(qi_1-qi)
+            # self.path.orbit_center.item(2) = -100
             self.path.orbit_radius = R
             self.path.orbit_direction = np.sign((qi_1.item(0)*qi.item(1))-(qi_1.item(1)*qi.item(0)))
+            print("orbit center:", self.path.orbit_center)
             self.halfspace_r = wi + R/np.tan(varrho/2.)*qi
             self.halfspace_n = qi
             if self.inHalfSpace(P):
@@ -94,7 +96,51 @@ class path_manager:
         self.path.airspeed = waypoints.airspeed.item(self.ptr_previous)
 
     def dubins_manager(self, waypoints, radius, state):
-        print("dubins manager")
+        P = np.array([[state.pn,state.pe,-state.h]]).T
+        R = radius
+        wi_1 = np.array([[waypoints.ned[0][self.ptr_previous],waypoints.ned[1][self.ptr_previous],waypoints.ned[2][self.ptr_previous]]]).T
+        chii_1 = waypoints.course[self.ptr_previous]
+        wi = np.array([[waypoints.ned[0][self.ptr_current],waypoints.ned[1][self.ptr_current],waypoints.ned[2][self.ptr_current]]]).T
+        chii = waypoints.course[self.ptr_current]
+        # wip1 = np.array([[waypoints.ned[0][self.ptr_next],waypoints.ned[1][self.ptr_next],waypoints.ned[2][self.ptr_next]]]).T
+        # chip1 = waypoints.course[self.ptr_next]
+        self.dubins_path.update(wi_1,chii_1,wi,chii,R)
+        if self.manager_state == 1:
+            self.path.flag = 'orbit'
+            self.path.orbit_center = self.dubins_path.center_s
+            self.path.orbit_radius = self.dubins_path.radius
+            self.path.orbit_direction = self.dubins_path.dir_s
+            self.halfspace_r = self.dubins_path.r1 #z1
+            self.halfspace_n = -self.dubins_path.n1 #-q1
+            if self.inHalfSpace(P):
+                self.manager_state = 2
+        elif self.manager_state == 2:
+            self.halfspace_r = self.dubins_path.r1 #z1
+            self.halfspace_n = self.dubins_path.n1 #q1
+            if self.inHalfSpace(P):
+                self.manager_state = 3
+        elif self.manager_state == 3:
+            self.path.flag = 'line'
+            self.path.line_origin = self.dubins_path.r1
+            self.path.line_direction = self.dubins_path.n1
+            self.halfspace_r = self.dubins_path.r2 #z2
+            self.halfspace_n = self.dubins_path.n1 #q1
+            if self.inHalfSpace(P):
+                self.manager_state = 4
+        elif self.manager_state == 4:
+            self.path.flag = 'orbit'
+            self.path.orbit_center = self.dubins_path.center_e
+            self.path.orbit_radius = self.dubins_path.radius
+            self.path.orbit_direction = self.dubins_path.dir_e
+            self.halfspace_r = self.dubins_path.r3 #z3
+            self.halfspace_n = -self.dubins_path.n3 #-q3
+            if self.inHalfSpace(P):
+                self.manager_state = 5
+        else: #state 5
+            if self.inHalfSpace(P):
+                self.manager_state = 1
+                self.increment_pointers()
+                self.dubins_path.update(wi_1,chii_1,wi,chii,R)
 
     def initialize_pointers(self):
         print("initialize pointers")

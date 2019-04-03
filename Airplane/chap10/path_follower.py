@@ -51,9 +51,6 @@ class path_follower:
         qe = q.item(1)
         qd = q.item(2)
         self.autopilot_commands.altitude_command = -rd - np.sqrt(sn**2.+se**2.)*qd/np.sqrt(qn**2.+qe**2.)
-        print("ac:", self.autopilot_commands.altitude_command)
-        # print("q part:", qd/np.sqrt(qn**2.+qe**2.))
-        # print("s part:", np.sqrt(sn**2.+se**2.))
         self.autopilot_commands.phi_feedforward = 0.
 
     def _follow_orbit(self, path, state):

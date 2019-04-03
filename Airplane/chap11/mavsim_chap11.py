@@ -20,9 +20,9 @@ from chap11.path_manager import path_manager
 from chap11.waypoint_viewer import waypoint_viewer
 
 # initialize the visualization
-VIDEO = False  # True==write video, False==don't write video
 waypoint_view = waypoint_viewer()  # initialize the viewer
 data_view = data_viewer()  # initialize view of data plots
+VIDEO = False  # True==write video, False==don't write video
 if VIDEO == True:
     from chap2.video_writer import video_writer
     video = video_writer(video_name="chap11_video.avi",
@@ -43,20 +43,29 @@ waypoints = msg_waypoints()
 # waypoints.type = 'straight_line'
 waypoints.type = 'fillet'
 # waypoints.type = 'dubins'
-waypoints.num_waypoints = 4
+waypoints.num_waypoints = 8
 Va = PLAN.Va0
 waypoints.ned[:, 0:waypoints.num_waypoints] \
     = np.array([[0, 0, -100],
                 [1000, 0, -100],
                 [0, 1000, -100],
+                [1000, 1000, -100],
+                [0, 0, -100],
+                [1000, 0, -100],
+                [0, 1000, -100],
                 [1000, 1000, -100]]).T
 waypoints.airspeed[:, 0:waypoints.num_waypoints] \
-    = np.array([[Va, Va, Va, Va]])
+    = np.array([[Va, Va, Va, Va, Va, Va, Va, Va]])
 waypoints.course[:, 0:waypoints.num_waypoints] \
     = np.array([[np.radians(0),
                  np.radians(45),
                  np.radians(45),
-                 np.radians(-135)]])
+                 np.radians(-135),
+                 np.radians(0),
+                 np.radians(45),
+                 np.radians(45),
+                 np.radians(-135)
+                 ]])
 
 # initialize the simulation time
 sim_time = SIM.start_time
