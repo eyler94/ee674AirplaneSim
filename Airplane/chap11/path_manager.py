@@ -56,13 +56,42 @@ class path_manager:
         if self.inHalfSpace(P):
             self.increment_pointers()
 
-
+        ### Return
         self.path.airspeed = waypoints.airspeed.item(self.ptr_previous)
         self.path.line_origin = ri_1
         self.path.line_direction = qi_1
 
     def fillet_manager(self, waypoints, radius, state):
-        print("fillet manager")
+        # print("waypoints",waypoints.ned)#,waypoints.course)
+        P = np.array([[state.pn,state.pe,-state.h]]).T
+        R = radius
+        wi_1 = np.array([[waypoints.ned[0][self.ptr_previous],waypoints.ned[1][self.ptr_previous],waypoints.ned[2][self.ptr_previous]]]).T
+        wi = np.array([[waypoints.ned[0][self.ptr_current],waypoints.ned[1][self.ptr_current],waypoints.ned[2][self.ptr_current]]]).T
+        wip1 = np.array([[waypoints.ned[0][self.ptr_next],waypoints.ned[1][self.ptr_next],waypoints.ned[2][self.ptr_next]]]).T
+        qi_1 = (wi-wi_1)/np.linalg.norm(wi-wi_1)
+        qi = (wip1-wi)/np.linalg.norm(wip1-wi)
+        varrho = np.arccos(-qi_1.T*qi)
+        if self.manager_state == 1:
+            self.path.flag = 'line'
+            self.path.line_origin = wi_1
+            self.path.line_direction = qi_1
+            self.halfspace_r = wi - R/np.tan(varrho/2.)*qi_1
+            self.halfspace_n = qi_1
+            if self.inHalfSpace(P):
+                self.manager_state = 2
+        elif self.manager_state == 2:
+            self.path.flag = 'orbit'
+            self.path.orbit_center = wi - R/np.sin(varrho/2.)*(qi_1-qi)/np.linalg.norm(qi_1-qi)
+            self.path.orbit_radius = R
+            self.path.orbit_direction = np.sign((qi_1.item(0)*qi.item(1))-(qi_1.item(1)*qi.item(0)))
+            self.halfspace_r = wi + R/np.tan(varrho/2.)*qi
+            self.halfspace_n = qi
+            if self.inHalfSpace(P):
+                self.increment_pointers()
+                self.manager_state = 1
+
+        ### Return
+        self.path.airspeed = waypoints.airspeed.item(self.ptr_previous)
 
     def dubins_manager(self, waypoints, radius, state):
         print("dubins manager")

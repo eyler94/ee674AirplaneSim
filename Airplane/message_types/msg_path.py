@@ -24,4 +24,4 @@ class msg_path:
         # radius of the orbit (rho)
         self.orbit_radius = 50
         # orbit direction: 'CW'==clockwise, 'CCW'==counter clockwise
-        self.orbit_direction = 'CW'
+        self.orbit_direction = 1
