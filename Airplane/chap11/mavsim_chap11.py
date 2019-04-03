@@ -41,8 +41,8 @@ path_manage = path_manager()
 from message_types.msg_waypoints import msg_waypoints
 waypoints = msg_waypoints()
 # waypoints.type = 'straight_line'
-waypoints.type = 'fillet'
-# waypoints.type = 'dubins'
+# waypoints.type = 'fillet'
+waypoints.type = 'dubins'
 waypoints.num_waypoints = 8
 Va = PLAN.Va0
 waypoints.ned[:, 0:waypoints.num_waypoints] \
@@ -78,6 +78,7 @@ while sim_time < SIM.end_time:
     estimated_state = obsv.update(measurements)  # estimate states from measurements
 
     #-------path manager-------------
+    print("t:",sim_time)
     path = path_manage.update(waypoints, PLAN.R_min, estimated_state)
 
     #-------path follower-------------

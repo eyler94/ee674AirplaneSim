@@ -99,9 +99,9 @@ class path_manager:
         P = np.array([[state.pn,state.pe,-state.h]]).T
         R = radius
         wi_1 = np.array([[waypoints.ned[0][self.ptr_previous],waypoints.ned[1][self.ptr_previous],waypoints.ned[2][self.ptr_previous]]]).T
-        chii_1 = waypoints.course[self.ptr_previous]
+        chii_1 = waypoints.course[0][self.ptr_previous]
         wi = np.array([[waypoints.ned[0][self.ptr_current],waypoints.ned[1][self.ptr_current],waypoints.ned[2][self.ptr_current]]]).T
-        chii = waypoints.course[self.ptr_current]
+        chii = waypoints.course[0][self.ptr_current]
         # wip1 = np.array([[waypoints.ned[0][self.ptr_next],waypoints.ned[1][self.ptr_next],waypoints.ned[2][self.ptr_next]]]).T
         # chip1 = waypoints.course[self.ptr_next]
         self.dubins_path.update(wi_1,chii_1,wi,chii,R)
