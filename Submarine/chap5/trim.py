@@ -36,6 +36,10 @@ def compute_trim(mav, Va, gamma):
                        ])
     x0 = np.concatenate((state0, delta0), axis=0)
     # define equality constraints
+    bnds = ((None, None),(None, None),(None, None),(None, None),\
+            (None, None),(None, None),(None, None),(None, None),\
+            (None, None),(None, None),(None, None),(None, None),(None, None),\
+            (-1.0,1.0),(-1.0,1.0),(-1.0,1.0),(-1.0,1.0))
     cons = ({'type': 'eq',
              'fun': lambda x: np.array([
                                 x[3]**2 + x[4]**2 + x[5]**2 - Va**2,  # magnitude of velocity vector is Va
@@ -59,7 +63,7 @@ def compute_trim(mav, Va, gamma):
                                 ])
              })
     # solve the minimization problem to find the trim states and inputs
-    res = minimize(trim_objective, x0, method='SLSQP', args = (mav, Va, gamma),
+    res = minimize(trim_objective, x0, method='SLSQP', args = (mav, Va, gamma),bounds=bnds,
                    constraints=cons, options={'ftol': 1e-10, 'disp': True})
     # extract trim state and input and return
     trim_state = np.array([res.x[0:13]]).T

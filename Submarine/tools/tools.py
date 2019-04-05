@@ -40,3 +40,31 @@ def Quaternion2Rotation(e):
                   [2*(e1*e3 - e0*e2), 2*(e2*e3 + e0*e1), e0**2 - e1**2 - e2**2 + e3**2]
                   ])
     return R
+
+def Euler2Rotation(phi, theta, psi):
+    # print("orig:", phi, theta, psi)
+    # e = Euler2Quaternion(phi, theta, psi)
+    # R = Quaternion2Euler(e)
+
+    cph = np.cos(phi)
+    sph = np.sin(phi)
+    cth = np.cos(theta)
+    sth = np.sin(theta)
+    cps = np.cos(psi)
+    sps = np.sin(psi)
+
+    Rbv2 = np.array([[1., 0., 0.],\
+                    [0., cph, sph],\
+                    [0., -sph, cph]])
+
+    Rv2v1 = np.array([[cth, 0., -sth],\
+                    [0., 1., 0.],\
+                    [sth, 0., cth]])
+
+    Rv1i = np.array([[cps, sps, 0.],\
+                    [-sps, cps, 0.],\
+                    [0., 0., 1.]])
+
+    R = Rbv2@Rv2v1@Rv1i
+
+    return R.T

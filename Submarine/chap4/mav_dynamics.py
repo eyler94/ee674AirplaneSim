@@ -2,7 +2,7 @@
 mav_dynamics
     - this file implements the dynamic equations of motion for MAV
     - use unit quaternion for the attitude state
-    
+
 """
 import sys
 sys.path.append('..')
@@ -36,6 +36,16 @@ class mav_dynamics:
                                [MAV.p0],    # (10)
                                [MAV.q0],    # (11)
                                [MAV.r0]])   # (12)
+        self.u_dot = 0.
+        self.v_dot = 0.
+        self.w_dot = 0.
+        self.e0_dot = 0.
+        self.e1_dot = 0.
+        self.e2_dot = 0.
+        self.e3_dot = 0.
+        self.p_dot = 0.
+        self.q_dot = 0.
+        self.r_dot = 0.
         # store wind data for fast recall since it is used at various points in simulation
         self._wind = np.array([[0.], [0.], [0.]])  # wind in NED frame in meters/sec
         self._update_velocity_data()
@@ -72,11 +82,6 @@ class mav_dynamics:
         e1 = self._state.item(7)
         e2 = self._state.item(8)
         e3 = self._state.item(9)
-        print("\ne0:", e0,\
-              "\ne1:", e1,\
-              "\ne2:", e2,\
-              "\ne3:", e3,\
-              )
         normE = np.sqrt(e0**2+e1**2+e2**2+e3**2)
         self._state[6][0] = self._state.item(6)/normE
         self._state[7][0] = self._state.item(7)/normE
@@ -113,36 +118,48 @@ class mav_dynamics:
         fx = forces_moments.item(0)
         fy = forces_moments.item(1)
         fz = forces_moments.item(2)
-        l = forces_moments.item(3)
+        k = forces_moments.item(3)
         m = forces_moments.item(4)
         n = forces_moments.item(5)
-
+        # print("forces and moments:", forces_moments)
 
         # position kinematics
-        pn_dot = (e1 ** 2 + e0 ** 2 - e2 ** 2 - e3 ** 2) * u + 2 * (e1 * e2 - e3 * e0) * v + 2 * (e1 * e3 + e2 * e0) * w
-        pe_dot = 2 * (e1 * e2 + e3 * e0) * u + (e2 ** 2 + e0 ** 2 - e1 ** 2 - e3 ** 2) * v + 2 * (e2 * e3 - e1 * e0) * w
-        pd_dot = 2 * (e1 * e3 - e2 * e0) * u + 2 * (e2 * e3 + e1 * e0) * v + (e3 ** 2 + e0 ** 2 - e1 ** 2 - e2 ** 2) * w
+        pn_dot = (e1**2+e0**2-e2**2-e3**2)*u + 2*(e1*e2-e3*e0)*v + 2*(e1*e3+e2*e0)*w
+        pe_dot = 2*(e1*e2+e3*e0)*u + (e2**2+e0**2-e1**2-e3**2)*v + 2*(e2*e3-e1*e0)*w
+        pd_dot = 2*(e1*e3-e2*e0)*u + 2*(e2*e3+e1*e0)*v + (e3**2+e0**2-e1**2-e2**2)*w
 
         # position dynamics
         mass = MAV.mass
-        u_dot = (r * v - q * w) + fx / mass
-        v_dot = (p * w - r * u) + fy / mass
-        w_dot = (q * u - p * v) + fz / mass
+        xg = MAV.xg
+        yg = MAV.yg
+        zg = MAV.zg
+        self.u_dot = fx/mass + v*r - w*q + xg*(q**2 + r**2) - yg*(p*q-self.r_dot) - zg*(p*r+self.q_dot)
+        self.v_dot = fy/mass + w*p - u*r + yg*(r**2 + p**2) - zg*(q*r-self.p_dot) - xg*(q*p+self.r_dot)
+        self.w_dot = fz/mass + u*q - v*p + zg*(p**2 + q**2) - xg*(r*p-self.q_dot) - yg*(r*q+self.p_dot)
+        # u_dot = (r*v-q*w)+fx/mass
+        # v_dot = (p*w-r*u)+fy/mass
+        # w_dot = (q*u-p*v)+fz/mass
 
         # rotational kinematics
-        e0_dot = 0.5 * (-p * e1 - q * e2 - r * e3)
-        e1_dot = 0.5 * (p * e0 + r * e2 - q * e3)
-        e2_dot = 0.5 * (q * e0 - r * e1 + p * e3)
-        e3_dot = 0.5 * (r * e0 + q * e1 - p * e2)
+        e0_dot = 0.5*(-p*e1-q*e2-r*e3)
+        e1_dot = 0.5*(p*e0+r*e2-q*e3)
+        e2_dot = 0.5*(q*e0-r*e1+p*e3)
+        e3_dot = 0.5*(r*e0+q*e1-p*e2)
 
-        # rotational dynamics
-        p_dot = MAV.gamma1 * p * q - MAV.gamma2 * q * r + MAV.gamma3 * l + MAV.gamma4 * n
-        q_dot = MAV.gamma5 * p * r - MAV.gamma6 * (p ** 2 - r ** 2) + m / MAV.Jy
-        r_dot = MAV.gamma7 * p * q - MAV.gamma1 * q * r + MAV.gamma4 * l + MAV.gamma8 * n
+        # rotatonal dynamics
+        Ix = MAV.Ix
+        Iy = MAV.Iy
+        Iz = MAV.Iz
+        self.p_dot = -((Iz-Iy)*q*r-mass*(yg*(self.w_dot-u*q+v*p)-zg*(self.v_dot-w*p+u*r)))/Ix + k/Ix
+        self.q_dot = -((Ix-Iz)*r*p-mass*(zg*(self.u_dot-v*r+w*q)-xg*(self.w_dot-u*q+v*p)))/Iy + m/Iy
+        self.r_dot = -((Iy-Ix)*p*q-mass*(xg*(self.v_dot-w*p+u*r)-yg*(self.u_dot-v*r+w*q)))/Iz + n/Iz
+        # p_dot = MAV.gamma1*p*q-MAV.gamma2*q*r + MAV.gamma3*k+MAV.gamma4*n
+        # r_dot = MAV.gamma7*p*q - MAV.gamma1*q*r + MAV.gamma4*k+MAV.gamma8*n
+        # q_dot = MAV.gamma5*p*r - MAV.gamma6*(p**2-r**2) + m/Iy
 
         # collect the derivative of the states
-        x_dot = np.array([[pn_dot, pe_dot, pd_dot, u_dot, v_dot, w_dot,
-                           e0_dot, e1_dot, e2_dot, e3_dot, p_dot, q_dot, r_dot]]).T
+        x_dot = np.array([[pn_dot, pe_dot, pd_dot, self.u_dot, self.v_dot, self.w_dot,
+                           e0_dot, e1_dot, e2_dot, e3_dot, self.p_dot, self.q_dot, self.r_dot]]).T
         return x_dot
 
     def _update_velocity_data(self, wind=np.zeros((6,1))):
@@ -163,12 +180,19 @@ class mav_dynamics:
         :param delta: np.matrix(delta_a, delta_e, delta_r, delta_t)
         :return: Forces and Moments on the UAV np.matrix(Fx, Fy, Fz, Ml, Mn, Mm)
         """
-        assert delta.shape == (4,1)
-        de = delta[0,0]
-        dt = delta[1,0]
-        da = delta[2,0]
-        dr = delta[3,0]
+        assert delta.shape == (5,1)
+        dspl = delta[0,0] # Left Stern Plane when looking stern to bow
+        dspr = delta[1,0] # Right Stern Plane
+        drt = delta[2,0] # Top Rudder
+        drb = delta[3,0] # Bottom Rudder
+        dm = delta[4,0] # Motor
 
+        pn = self._state.item(0)
+        pe = self._state.item(1)
+        pd = self._state.item(2)
+        u = self._state.item(3)
+        v = self._state.item(4)
+        w = self._state.item(5)
         e0 = self._state.item(6)
         e1 = self._state.item(7)
         e2 = self._state.item(8)
@@ -178,73 +202,45 @@ class mav_dynamics:
         r = self._state.item(12)
 
 
+        ##Forces and Moments
+        #Hydrostatic Forces
+        phi, theta, psi = Quaternion2Euler(self._state[6:10])
+        xg = MAV.xg
+        yg = MAV.yg
+        zg = MAV.zg
+        Weight = MAV.mass*MAV.gravity
+        Bouyancy = MAV.rho*MAV.gravity*MAV.length*MAV.radius**2*np.pi*self._submerged()
+        Xhs = -(Weight-Bouyancy)*np.sin(theta)
+        Yhs = (Weight-Bouyancy)*np.cos(theta)*np.sin(phi)
+        Zhs = (Weight-Bouyancy)*np.cos(theta)*np.cos(phi)
+        Khs = -MAV.yg * Weight * np.cos(theta) * np.cos(phi) - zg * np.cos(theta) * np.sin(phi)
+        Mhs = -zg*Weight*np.sin(theta) - xg*Weight*np.cos(theta)*np.cos(phi)
+        Nhs = -yg*Weight*np.cos(theta)*np.sin(phi) - zg*Weight*np.sin(theta)
 
-        Fg = MAV.mass*MAV.gravity*np.array([[2*(e1*e3-e2*e0)],
-                                            [2*(e2*e3 + e1*e0)],
-                                            [e3**2+e0**2-e1**2-e2**2],
-                                            ])
+        #Added Mass
+        Xa = Xudot*self.u_dot + Xwq*w*q + Wqq*q**2 + Xvr*v*r + Xrr*r**2
+        Ya = Yvdot*self.v_dot + Yrdot*self.r_dot + Yura*u*r + Ywp*w*p + Ypq*p*q
+        Za = Zwdot*self.w_dot + Zqdot*self.q_dot + Zuqa*u*q + Zvp*v*p + Zrp*r*p
+        Ka = Kpdot*self.p_dot
+        Ma = Mwdot*self.w_dot + Mqdot*self.q_dot + Muwa*u*w + Mvp*v*p + Mrp*r*p + Muqa*u*q
+        Na = Nvdot*self.v_dot + Nrdot*self.r_dot + Nuva*u*v + Nwp*w*p + Mpq*p*q + Nura*u*r
 
-        M_e = 25
-        sig = lambda a: (1+np.exp(-M_e*(a-MAV.alpha0))+np.exp(M_e*(a+MAV.alpha0)))/((1+np.exp(-M_e*(a-MAV.alpha0)))*(1+np.exp(M_e*(a+MAV.alpha0))))
-        cla = lambda a: (1-sig(a))*(MAV.C_L_0+MAV.C_L_alpha*a)+sig(a)*(2*np.sign(a)*np.sin(a)**2*np.cos(a))
-        cda = lambda a: MAV.C_D_p + (MAV.C_L_0+MAV.C_L_alpha*a)**2/(np.pi*MAV.e*MAV.AR)
-        cxa = lambda a: -(cda(a)) * np.cos(a) + (cla(a)) * np.sin(a)
 
-        cxq = lambda a: -MAV.C_D_q * np.cos(a) + MAV.C_L_q * np.sin(a)
+        #Hydrodynamic forces
 
-        cxde = lambda a: -MAV.C_D_delta_e * np.cos(a) + MAV.C_L_delta_e * np.sin(a)
+        #Control surfaces
 
-        cza = lambda a: -(cda(a)) * np.sin(a) - (cla(a)) * np.cos(a)
+        #Forces and Moments summation
+        fx = Xhs
+        fy = Yhs
+        fz = Zhs
+        Mx = Khs
+        My = Mhs
+        Mz = Nhs
 
-        czq = lambda a: -MAV.C_D_q * np.sin(a) - MAV.C_L_q * np.cos(a)
-
-        czde = lambda a: -MAV.C_D_delta_e * np.sin(a) - MAV.C_L_delta_e * np.cos(a)
-
-        c = MAV.c/(2*self._Va)
-        b = MAV.b/(2*self._Va)
-
-        Fa = 0.5*MAV.rho*self._Va**2*MAV.S_wing*np.array([\
-            [1,0,0],[0,1,0],[0,0,1]]).dot(np.array([[cxa(self._alpha)+cxq(self._alpha)*c*q+cxde(self._alpha)*de],
-            [MAV.C_Y_0+MAV.C_Y_beta*self._beta+MAV.C_Y_p*b*p+MAV.C_Y_r*b*r+MAV.C_Y_delta_a*da+MAV.C_Y_delta_r*dr],
-            [cza(self._alpha)+czq(self._alpha)*c*q+czde(self._alpha)*de],
-            ]))
-
-        F = Fg + Fa
-
-        Fp = 0.5*MAV.S_prop*MAV.C_prop*((MAV.k_motor*dt)**2-self._Va**2)
-
-        fx = F.item(0)\
-            + Fp\
-            # + 0.5*MAV.rho*self._Va**2*MAV.S_wing*(\
-            #     +cxa(self._alpha)\
-            #     + cxq(self._alpha)*c*q\
-            #     + cxde(self._alpha)*de
-            #     )
-
-        fy = F.item(1)
-        fz = F.item(2)
-
-        #  Moment time!!!
-        Ma = 0.5*MAV.rho*self._Va**2*MAV.S_wing*np.array([\
-            [MAV.b*(MAV.C_ell_0+MAV.C_ell_beta*self._beta+MAV.C_ell_p*b*p+MAV.C_ell_r*b*r+MAV.C_ell_delta_a*da+MAV.C_ell_delta_r*dr)],
-            [MAV.c*(MAV.C_m_0+(MAV.C_m_alpha*self._alpha)+(MAV.C_m_q*c*q)+(MAV.C_m_delta_e*de))],
-            [MAV.b*(MAV.C_n_0+(MAV.C_n_beta*self._beta)+(MAV.C_n_p*b*p)+(MAV.C_n_r*b*r)+(MAV.C_n_delta_a*da)+(MAV.C_n_delta_r*dr))]
-            ])
-        print("\nMa:", Ma)
-        Mp = np.array([[-MAV.kTp*(MAV.kOmega*dt)**2],
-                       [0.],
-                       [0.]
-                       ])
-
-        M = Mp + Ma
-
-        Mx = M.item(0)
-        My = M.item(1)
-        Mz = M.item(2)
-
-        # self._forces[0] = fx
-        # self._forces[1] = fy
-        # self._forces[2] = fz
+        self._forces[0] = fx
+        self._forces[1] = fy
+        self._forces[2] = fz
         return np.array([[fx, fy, fz, Mx, My, Mz]]).T
 
     def _update_msg_true_state(self):
@@ -268,14 +264,24 @@ class mav_dynamics:
         Va_h = np.array([self._ur,self._vr,0.])
         Va_h_M = np.linalg.norm(Va_h)
         self.msg_true_state.gamma = np.arccos(Vg.dot(Vg_h)/(Vg_M*Vg_h_M))
-        self.msg_true_state.chi = psi + self._beta + np.arccos(Vg_h.dot(Va_h)/(Vg_h_M*Va_h_M))
+        num = Vg_h.dot(Va_h)
+        den = (Vg_h_M*Va_h_M)
+        frac = np.round(num/den,8)
+        self.msg_true_state.chi = psi + self._beta + np.arccos(frac)
         self.msg_true_state.p = self._state.item(10)
         self.msg_true_state.q = self._state.item(11)
         self.msg_true_state.r = self._state.item(12)
         self.msg_true_state.wn = self._wind.item(0)
         self.msg_true_state.we = self._wind.item(1)
 
-
-    def _prop_force_moment_calc(self, delta_t):
-        V_in = MAV.V_max*delta_t
-        a = MAV.C_Q0*MAV.Made_up
+    def _submerged(self):
+        depth = self._state.item(2)
+        if depth >= MAV.radius*2.:
+            print("deep")
+            return 1.
+        elif depth >= 0:
+            print("shallow")
+            return depth/MAV.radius*2.
+        else:
+            print("outta water")
+            return 0.

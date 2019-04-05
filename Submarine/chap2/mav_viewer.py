@@ -95,33 +95,33 @@ class mav_viewer():
             Define the points on the aircraft following diagram in Figure C.3
         """
         # points are in NED coordinates
-        points = np.array([[5, 1, 0],  # point 1
-                           [5, -1, 0],  # point 2
-                           [-5, -1, 0],  # point 3
-                           [-5, 1, 0],  # point 4
-                           [5, 1, -2],  # point 5
-                           [5, -1, -2],  # point 6
-                           [-5, -1, -2],  # point 7
-                           [-5, 1, -2],  # point 8
-                           [5, 1, 0],  # point 9
-                           [5, -1, 0],  # point 10
-                           [-5, -1, 0],  # point 11
-                           [-5, 1, 0],  # point 12
-                           [0.2, 0.2, -2],  # Begin Periscope Tower
-                           [0.2, -0.2, -2],
-                           [-0.2, -0.2, -2],
-                           [-0.2, 0.2, -2],
-                           [0.2, 0.2, -2.5],
-                           [0.2, -0.2, -2.5],
-                           [-0.2, -0.2, -2.5],
-                           [-0.2, 0.2, -2.5],  # End Periscope Tower
-                           [1.5, 1.5, -1],  # point 11
-                           [1.5, -1.5, -1],  # point 12
-                           [-1.5, -1.5, -1],  # point 11
-                           [-1.5, 1.5, -1],  # point 12
+        points = np.array([[5, 1, 1],  # point 1
+                           [5, -1, 1],  # point 2
+                           [-5, -1, 1],  # point 3
+                           [-5, 1, 1],  # point 4
+                           [5, 1, -1],  # point 5
+                           [5, -1, -1],  # point 6
+                           [-5, -1, -1],  # point 7
+                           [-5, 1, -1],  # point 8
+                           [5, 1, 1],  # point 9
+                           [5, -1, 1],  # point 10
+                           [-5, -1, 1],  # point 11
+                           [-5, 1, 1],  # point 12
+                           [0.2, 0.2, -1],  # Begin Periscope Tower
+                           [0.2, -0.2, -1],
+                           [-0.2, -0.2, -1],
+                           [-0.2, 0.2, -1],
+                           [0.2, 0.2, -1.5],
+                           [0.2, -0.2, -1.5],
+                           [-0.2, -0.2, -1.5],
+                           [-0.2, 0.2, -1.5],  # End Periscope Tower
+                           [1.5, 1.5, 0],  # point 11
+                           [1.5, -1.5, 0],  # point 12
+                           [-1.5, -1.5, 0],  # point 11
+                           [-1.5, 1.5, 0],  # point 12
                            ]).T
         # scale points for better rendering
-        scale = 10
+        scale = 5
         points = scale * points
 
         #   define the colors for each face of triangular mesh

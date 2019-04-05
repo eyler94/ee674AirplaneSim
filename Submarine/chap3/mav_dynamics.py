@@ -2,10 +2,10 @@
 mav_dynamics
     - this file implements the dynamic equations of motion for MAV
     - use unit quaternion for the attitude state
-    
+
 part of mavsimPy
     - Beard & McLain, PUP, 2012
-    - Update history:  
+    - Update history:
         12/17/2018 - RWB
         1/14/2019 - RWB
 """
@@ -31,13 +31,16 @@ class mav_dynamics:
                                 [MAV.p0], [MAV.q0], [MAV.r0]
                                 ])
         self.msg_true_state = msg_state()
+        self.p_dot = 0.
+        self.q_dot = 0.
+        self.r_dot = 0.
 
     ###################################
     # public functions
     def update_state(self, forces_moments):
         '''
 
-            Integrate the differential equations defining dynamics. 
+            Integrate the differential equations defining dynamics.
             Inputs are the forces and moments on the aircraft.
             Ts is the time step between function calls.
         '''
@@ -48,8 +51,9 @@ class mav_dynamics:
         k2 = self._derivatives(self._state + time_step/2.*k1, forces_moments)
         k3 = self._derivatives(self._state + time_step/2.*k2, forces_moments)
         k4 = self._derivatives(self._state + time_step*k3, forces_moments)
-        print(self._state)
+        # print(self._state)
         self._state = self._state + time_step/6 * (k1 + 2*k2 + 2*k3 + k4)
+        # print("After addition\n", self._state)
 
         # normalize the quaternion
         e0 = self._state.item(6)
@@ -72,6 +76,7 @@ class mav_dynamics:
         for the dynamics xdot = f(x, u), returns f(x, u)
         """
         # extract the states
+        print("state:",state)
         pn = state.item(0)
         pe = state.item(1)
         pd = state.item(2)
@@ -89,9 +94,10 @@ class mav_dynamics:
         fx = forces_moments.item(0)
         fy = forces_moments.item(1)
         fz = forces_moments.item(2)
-        l = forces_moments.item(3)
+        k = forces_moments.item(3)
         m = forces_moments.item(4)
         n = forces_moments.item(5)
+        # print("forces and moments:", forces_moments)
 
         # position kinematics
         pn_dot = (e1**2+e0**2-e2**2-e3**2)*u + 2*(e1*e2-e3*e0)*v + 2*(e1*e3+e2*e0)*w
@@ -100,9 +106,15 @@ class mav_dynamics:
 
         # position dynamics
         mass = MAV.mass
-        u_dot = (r*v-q*w)+fx/mass
-        v_dot = (p*w-r*u)+fy/mass
-        w_dot = (q*u-p*v)+fz/mass
+        xg = MAV.xg
+        yg = MAV.yg
+        zg = MAV.zg
+        u_dot = fx/mass + v*r - w*q + xg*(q**2 + r**2) - yg*(p*q-self.r_dot) - zg*(p*r+self.q_dot)
+        v_dot = fy/mass + w*p - u*r + yg*(r**2 + p**2) - zg*(q*r-self.p_dot) - xg*(q*p+self.r_dot)
+        w_dot = fz/mass + u*q - v*p + zg*(p**2 + q**2) - xg*(r*p-self.q_dot) - yg*(r*q+self.p_dot)
+        # u_dot = (r*v-q*w)+fx/mass
+        # v_dot = (p*w-r*u)+fy/mass
+        # w_dot = (q*u-p*v)+fz/mass
 
         # rotational kinematics
         e0_dot = 0.5*(-p*e1-q*e2-r*e3)
@@ -111,13 +123,19 @@ class mav_dynamics:
         e3_dot = 0.5*(r*e0+q*e1-p*e2)
 
         # rotatonal dynamics
-        p_dot = MAV.gamma1*p*q-MAV.gamma2*q*r + MAV.gamma3*l+MAV.gamma4*n
-        q_dot = MAV.gamma5*p*r - MAV.gamma6*(p**2-r**2) + m/MAV.Jy
-        r_dot = MAV.gamma7*p*q - MAV.gamma1*q*r + MAV.gamma4*l+MAV.gamma8*n
+        Ix = MAV.Ix
+        Iy = MAV.Iy
+        Iz = MAV.Iz
+        self.p_dot = -((Iz-Iy)*q*r-mass*(yg*(w_dot-u*q+v*p)-zg*(v_dot-w*p+u*r)))/Ix + k/Ix
+        self.q_dot = -((Ix-Iz)*r*p-mass*(zg*(u_dot-v*r+w*q)-xg*(w_dot-u*q+v*p)))/Iy + m/Iy
+        self.r_dot = -((Iy-Ix)*p*q-mass*(xg*(v_dot-w*p+u*r)-yg*(u_dot-v*r+w*q)))/Iz + n/Iz
+        # p_dot = MAV.gamma1*p*q-MAV.gamma2*q*r + MAV.gamma3*k+MAV.gamma4*n
+        # r_dot = MAV.gamma7*p*q - MAV.gamma1*q*r + MAV.gamma4*k+MAV.gamma8*n
+        # q_dot = MAV.gamma5*p*r - MAV.gamma6*(p**2-r**2) + m/Iy
 
         # collect the derivative of the states
         x_dot = np.array([[pn_dot, pe_dot, pd_dot, u_dot, v_dot, w_dot,
-                           e0_dot, e1_dot, e2_dot, e3_dot, p_dot, q_dot, r_dot]]).T
+                           e0_dot, e1_dot, e2_dot, e3_dot, self.p_dot, self.q_dot, self.r_dot]]).T
         return x_dot
 
     def _update_msg_true_state(self):

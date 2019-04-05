@@ -36,7 +36,7 @@ from message_types.msg_autopilot import msg_autopilot
 commands = msg_autopilot()
 Va_command = signals(dc_offset=25.0, amplitude=3.0, start_time=2.0, frequency = 0.01)
 h_command = signals(dc_offset=100.0, amplitude=10.0, start_time=0.0, frequency = 0.02)
-chi_command = signals(dc_offset=np.radians(180), amplitude=np.radians(45), start_time=5.0, frequency = 0.015)
+chi_command = signals(dc_offset=np.radians(180), amplitude=np.radians(90), start_time=5.0, frequency = 0.015)
 
 # initialize the simulation time
 sim_time = SIM.start_time
@@ -47,9 +47,9 @@ while sim_time < SIM.end_time:
 
     #-------controller-------------
     estimated_state = mav.msg_true_state  # uses true states in the control
-    commands.airspeed_command = 0#Va_command.square(sim_time)
+    commands.airspeed_command = Va_command.square(sim_time)
     commands.course_command = chi_command.square(sim_time)
-    commands.altitude_command = 0#h_command.square(sim_time)
+    commands.altitude_command = h_command.square(sim_time)
     delta, commanded_state = ctrl.update(commands, estimated_state)
 
     #-------physical system-------------

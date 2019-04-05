@@ -11,6 +11,7 @@ import parameters.control_parameters as AP
 from chap6.pid_control import pid_control#, pi_control, pd_control_with_rate
 from message_types.msg_state import msg_state
 from tools.tools import Euler2Quaternion, Quaternion2Euler
+from control import matlab
 
 
 class autopilot:
@@ -31,10 +32,11 @@ class autopilot:
                         ki=AP.sideslip_ki,
                         Ts=ts_control,
                         limit=np.radians(45))
-        # self.yaw_damper = transfer_function(
-        #                 num=np.array([[AP.yaw_damper_kp, 0]]),
-        #                 den=np.array([[1, 1/AP.yaw_damper_tau_r]]),
-        #                 Ts=ts_control)
+        self.yaw_damper = matlab.tf([0.5, 0.],[1.0, ],ts_control)
+                        #
+                        # num=np.array([[AP.yaw_damper_kp, 0]]),
+                        # den=np.array([[1, 1/AP.yaw_damper_tau_r]]),
+                        # Ts=ts_control)
 
         # instantiate lateral controllers
         self.pitch_from_elevator = pid_control( #pd_control_with_rate(
@@ -50,7 +52,8 @@ class autopilot:
                         kp=AP.airspeed_throttle_kp,
                         ki=AP.airspeed_throttle_ki,
                         Ts=ts_control,
-                        limit=1.0)
+                        limit=1.5,
+                        throttle_flag=True)
         self.commanded_state = msg_state()
 
     def update(self, cmd, state):
@@ -58,16 +61,19 @@ class autopilot:
         # lateral autopilot
 
         phi_c = self.course_from_roll.update(cmd.course_command,state.chi,reset_flag=True)  #cmd.course_command
-        delta_a = self.roll_from_aileron.update_with_rate(phi_c, state.phi, state.p)#-7.69439807e-09
-        delta_r = -1.17303383e-08
-
+        # delta_a = -8.13462186e-09  # Trim state
+        delta_a = self.roll_from_aileron.update_with_rate(phi_c, state.phi, state.p) # Controller based on chi command#
+        # delta_r = -1.21428507e-08
+        delta_r = self.sideslip_from_rudder.update(0,state.beta)
 
         # longitudinal autopilot
-        h_c = 100
-        theta_c = 0
-        delta_e = -1.24785991e-01
-        delta_t =  1.30925187e+00
-
+        h_c = cmd.altitude_command
+        theta_c = np.pi/16
+        theta_c = self.altitude_from_pitch.update(h_c, state.h)
+        # delta_e = -1.24785989e-01
+        delta_e = self.pitch_from_elevator.update_with_rate(theta_c, state.theta, state.q)
+        # delta_t =  3.14346798e-01 # Trim state
+        delta_t = self.airspeed_from_throttle.update(cmd.airspeed_command, state.Va)
 
         # construct output and commanded states
         delta = np.array([[delta_e], [delta_t], [delta_a], [delta_r]])

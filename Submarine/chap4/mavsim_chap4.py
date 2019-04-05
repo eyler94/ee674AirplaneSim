@@ -1,7 +1,7 @@
 """
 mavsimPy
     - Chapter 4 assignment for Beard & McLain, PUP, 2012
-    - Update history:  
+    - Update history:
         12/27/2018 - RWB
         1/17/2019 - RWB
 """
@@ -15,6 +15,7 @@ from chap2.mav_viewer import mav_viewer
 from chap3.data_viewer import data_viewer
 from chap4.mav_dynamics import mav_dynamics
 from chap4.wind_simulation import wind_simulation
+from time import sleep
 
 # initialize the visualization
 VIDEO = False  # True==write video, False==don't write video
@@ -33,14 +34,23 @@ mav = mav_dynamics(SIM.ts_simulation)
 sim_time = SIM.start_time
 
 # main simulation loop
+# sleep(5)
 print("Press Command-Q to exit...")
 while sim_time < SIM.end_time:
     #-------set control surfaces-------------
-    delta_e = -0.1
-    delta_t = 1.0#0.5
-    delta_a = 0.0#0.0
-    delta_r = 0.0#025#0.005
-    delta = np.array([[delta_e, delta_t, delta_a, delta_r]]).T  # transpose to make it a column vector
+    # if(sim_time<25):
+    delta_spl = 0.0
+    delta_spr = 0.0  # 0.5
+    delta_rt = 0.0  # 0.0
+    delta_rb= 0.0  # 0.005
+    delta_m = 0.0
+    delta = np.array([[delta_spl, delta_spr, delta_rt, delta_rb, delta_m]]).T  # transpose to make it a column vector
+    # else:
+    #     delta_spl = -0.3
+    #     delta_spr = 1.0#0.5
+    #     delta_rt = 0.01#0.0
+    #     delta_rb= 0.00025#0.005
+    #     delta = np.array([[delta_spl, delta_spr, delta_rt, delta_rb, delta_m]]).T  # transpose to make it a column vector
 
     #-------physical system-------------
     current_wind = wind.update()  # get the new wind vector
@@ -61,7 +71,3 @@ while sim_time < SIM.end_time:
 
 if VIDEO == True:
     video.close()
-
-
-
-
