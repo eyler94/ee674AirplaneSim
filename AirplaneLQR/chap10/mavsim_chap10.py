@@ -11,7 +11,7 @@ import parameters.simulation_parameters as SIM
 
 from chap3.data_viewer import data_viewer
 from chap4.wind_simulation import wind_simulation
-from chap6.autopilot import autopilot
+from chap6LQR.autopilot import autopilot
 from chap7.mav_dynamics import mav_dynamics
 from chap8.observer import observer
 from chap10.path_follower import path_follower

@@ -30,17 +30,38 @@ class lqr_control:
         self.limit = limit
         self.throttle_flag = throttle_flag
 
-    def update(self, r, y, x, wrap_flag=False):
+    def update(self, r, y, x, type, wrap_flag=False):
 
-        error = r-y
+        # if np.sign(r.item(1)) != np.sign(y.item(1)):
+
         if wrap_flag is True:
-            while error.item(1) >= np.pi:
+            while r.item(1) > np.pi:
                 # print("Correct positive")
-                error[1,0] = error.item(1) - 2.*np.pi
-            while error.item(1) <= -np.pi:
+                r[1,0] = r.item(1) - 2*np.pi
+            while r.item(1) <= -np.pi:
                 # print("Correct negative")
-                error[1,0] = error.item(1) + 2.*np.pi
-        self.integrateError(error)
+                r[1,0] = r.item(1) + 2*np.pi
+
+        error_y = r-y
+
+        if wrap_flag is True:
+            # while r.item(1) > np.pi:
+            #     # print("Correct positive")
+            #     r[1,0] = r.item(1) - 2*np.pi
+            # while r.item(1) <= -np.pi:
+            #     # print("Correct negative")
+            #     r[1,0] = r.item(1) + 2*np.pi
+            while error_y.item(1) > np.pi:
+                # print("Correct positive")
+                x[4][0] = error_y.item(1)
+                error_y[1,0] = np.pi - error_y.item(1)
+            while error_y.item(1) <= -np.pi:
+                # print("Correct negative")
+                x[4][0] = error_y.item(1)
+                error_y[1,0] = np.pi - error_y.item(1)
+
+        self.integrateError(error_y)
+
 
         u_unsat = self.u_eq + self.Kr@(r-self.y_eq) - self.K@(x-self.x_eq) #- self.Ki@(self.int_error)
 

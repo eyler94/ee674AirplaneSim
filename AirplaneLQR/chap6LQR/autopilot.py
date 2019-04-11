@@ -59,10 +59,11 @@ class autopilot:
     def update(self, cmd, state):
 
         # lateral autopilot
+        print("\ncourse command:",cmd.course_command)
         r_lat = np.array([[0,cmd.course_command]]).T
         y_lat = np.array([[state.beta,state.psi]]).T
         x_lat = np.array([[state.beta,state.p,state.r,state.phi,state.psi]]).T
-        u_lat = self.lat.update(r_lat,y_lat,x_lat,wrap_flag=True)
+        u_lat = self.lat.update(r_lat,y_lat,x_lat,"lat",wrap_flag=True)
 
         phi_c = 0.
         # delta_a = -8.13462186e-09  # Trim state
@@ -74,7 +75,7 @@ class autopilot:
         r_lon = np.array([[cmd.airspeed_command, cmd.altitude_command]]).T
         y_lon = np.array([[state.Va, state.h]]).T
         x_lon = np.array([[state.Va, state.alpha, state.q, state.theta, state.h]]).T
-        u_lon = self.lon.update(r_lon,y_lon,x_lon)
+        u_lon = self.lon.update(r_lon,y_lon,x_lon,"lon")
 
 
         h_c = cmd.altitude_command
