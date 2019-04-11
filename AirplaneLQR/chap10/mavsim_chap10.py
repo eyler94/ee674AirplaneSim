@@ -37,11 +37,11 @@ path_follow = path_follower()
 # path definition
 from message_types.msg_path import msg_path
 path = msg_path()
-path.flag = 'line'
-# path.flag = 'orbit'
+# path.flag = 'line'
+path.flag = 'orbit'
 if path.flag == 'line':
     path.line_origin = np.array([[0.0, 0.0, -100.0]]).T
-    path.line_direction = np.array([[0., 1.0, 0.0]]).T
+    path.line_direction = np.array([[1.0, 1.0, 0.0]]).T
     path.line_direction = path.line_direction / np.linalg.norm(path.line_direction)
 else:  # path.flag == 'orbit'
     path.orbit_center = np.array([[0.0, 0.0, -150.0]]).T  # center of the orbit
@@ -60,12 +60,12 @@ while sim_time < SIM.end_time:
     estimated_state = obsv.update(measurements)  # estimate states from measurements
 
     #-------path follower-------------
-    # autopilot_commands = path_follow.update(path, mav.msg_true_state)  # for debugging
-    autopilot_commands = path_follow.update(path, estimated_state)
+    autopilot_commands = path_follow.update(path, mav.msg_true_state)  # for debugging
+    # autopilot_commands = path_follow.update(path, estimated_state)
 
     #-------controller-------------
-    # delta, commanded_state = ctrl.update(autopilot_commands, mav.msg_true_state) # for debugging
-    delta, commanded_state = ctrl.update(autopilot_commands, estimated_state)
+    delta, commanded_state = ctrl.update(autopilot_commands, mav.msg_true_state) # for debugging
+    # delta, commanded_state = ctrl.update(autopilot_commands, estimated_state)
 
     #-------physical system-------------
     current_wind = wind.update()  # get the new wind vector

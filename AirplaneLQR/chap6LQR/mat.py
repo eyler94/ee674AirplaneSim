@@ -92,22 +92,24 @@ Blat_aug = np.vstack((B_lat,np.zeros((2,2))))
 # Clat_aug = np.array[-1 0 0 0 0 0 0;
 #             0 0 0 0 -1 0 0];
 
-betamax = np.pi/2.
-pmax = 5
+betamax = np.pi/3.
+pmax = 1.
 rmax = 1.
-phimax = np.pi/2.
-psimax = np.pi/2.
+phimax = np.pi/3.
+psimax = np.pi/3.
+beta_int_max = 3
+psi_int_max = 3
 
 Qlat = np.array([[1./betamax**2., 0., 0., 0., 0., 0., 0.],
                  [0., 1./pmax**2, 0., 0., 0., 0., 0.],
                  [0., 0., 1./rmax**2., 0., 0., 0., 0.],
                  [0., 0., 0., 1./phimax**2., 0., 0., 0.],
                  [0., 0., 0., 0., 1./psimax**2., 0., 0.],
-                 [0., 0., 0., 0., 0., 1., 0.],
-                 [0., 0., 0., 0., 0., 0., 1.]])
+                 [0., 0., 0., 0., 0., 1./beta_int_max**2., 0.],
+                 [0., 0., 0., 0., 0., 0., 1./psi_int_max**2.]])
 
 
-damax = np.radians(01.)
+damax = np.radians(01.5)
 drmax = np.radians(01.)
 Rlat = np.array([[1./damax**2, 0.],[0., 1./drmax**2]])
 
@@ -174,23 +176,25 @@ Blon_aug = np.vstack((B_lon,np.zeros((2,2))))
 # Clon_aug = np.array[-1 0 0 0 0 0 0;
 #             0 0 0 0 -1 0 0];
 
-umax = 1.
+umax = 5.
 alphamax = 0.5
 qmax = 3.5
-thetamax = np.pi
-hmax = 5.
+thetamax = np.pi/4.
+hmax = 2.5
+u_int_max = 1
+h_int_max = 2.5
 
 Qlon = np.array([[1./umax**2., 0., 0., 0., 0., 0., 0.],
                  [0., 1./alphamax**2, 0., 0., 0., 0., 0.],
                  [0., 0., 1./qmax**2., 0., 0., 0., 0.],
                  [0., 0., 0., 1./thetamax**2., 0., 0., 0.],
                  [0., 0., 0., 0., 1./hmax**2., 0., 0.],
-                 [0., 0., 0., 0., 0., 1., 0.],
-                 [0., 0., 0., 0., 0., 0., 1.]])
+                 [0., 0., 0., 0., 0., 1./u_int_max**2., 0.],
+                 [0., 0., 0., 0., 0., 0., 1./h_int_max**2.]])
 
 
-demax = np.radians(01.)
-dtmax = 1.
+demax = np.radians(0.5)
+dtmax = 0.01
 Rlon = np.array([[1./demax**2, 0.],[0., 1./dtmax**2]])
 
 Klon_all = lqr(Alon_aug,Blon_aug,Qlon,Rlon);
@@ -209,7 +213,7 @@ ylon_eq = np.array([[25., 100.]]).T
 
 ulon_eq = np.array([[de_eq, dt_eq]]).T
 
-limitlon = np.array([[np.radians(45.), 1.]])
+limitlon = np.array([[np.radians(30.), 1.]])
 
 # Klon =
 #

@@ -22,8 +22,9 @@ class lqr_control:
 
         ### Integrator stuff
         self.Ki = Ki
-        self.int_error = 0.
-        self.error_d1 = 0.
+        self.int_error = np.zeros((2,1))
+        self.error_d1 = np.zeros((2,1))
+        self.y_d1 = y_eq
 
         ### Saturation protection
         self.Ts = Ts
@@ -60,10 +61,17 @@ class lqr_control:
                 x[4][0] = error_y.item(1)
                 error_y[1,0] = np.pi - error_y.item(1)
 
-        self.integrateError(error_y)
+        vel = (y-self.y_d1)/self.Ts
+        if np.abs(vel.item(0)) <= 0.2:
+            self.integrateError(error_y,0)
+        if np.abs(vel.item(1)) <= 0.2:
+            self.integrateError(error_y,1)
 
+        if type == "lon":
+            u_unsat = self.u_eq + self.Kr@(r-self.y_eq) - self.K@(x-self.x_eq) - self.Ki@(self.int_error)
+        elif type == "lat":
+            u_unsat = self.u_eq + self.Kr@(r-self.y_eq) - self.K@(x-self.x_eq) - self.Ki@(self.int_error)
 
-        u_unsat = self.u_eq + self.Kr@(r-self.y_eq) - self.K@(x-self.x_eq) #- self.Ki@(self.int_error)
 
         u_sat = self._saturate(u_unsat)
 
@@ -71,9 +79,9 @@ class lqr_control:
 
         return u_sat
 
-    def integrateError(self, error):
-        self.int_error = self.int_error + (self.Ts/2.)*(error + self.error_d1)
-        self.error_d1 = error
+    def integrateError(self, error,spot):
+        self.int_error[spot][0] = self.int_error[spot][0] + (self.Ts/2.)*(error[spot][0] + self.error_d1[spot][0])
+        self.error_d1[spot][0] = error[spot][0]
 
     def integratorAntiWindup(self, u_sat, u_unsat):
         # if self.Ki != 0.0:

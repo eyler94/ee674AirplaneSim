@@ -7,8 +7,8 @@ from parameters import aerosonde_parameters as MAV
 
 class path_follower:
     def __init__(self):
-        self.chi_inf = np.radians(80)  # approach angle for large distance from straight-line path
-        self.k_path = 0.03  # proportional gain for straight-line path following
+        self.chi_inf = np.radians(50)  # approach angle for large distance from straight-line path
+        self.k_path = 0.02  # proportional gain for straight-line path following
         self.k_orbit = 2.5  # proportional gain for orbit following
         self.gravity = 9.8
         self.autopilot_commands = msg_autopilot()  # message sent to autopilot

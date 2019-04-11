@@ -80,8 +80,8 @@ class ekf_attitude:
         self.Q = np.eye(2)*1.*10**(-9.)
         self.Q_gyro = SENSOR.gyro_sigma**2.*np.eye(3)
         self.R_accel = SENSOR.accel_sigma**2.*np.eye(3)
-        self.N = 4  # number of prediction step per sample
-        self.xhat = np.array([[0.],[0.]]) # initial state: phi, theta
+        self.N = 9  # number of prediction step per sample
+        self.xhat = np.array([[0.],[0.05]]) # initial state: phi, theta
         self.P = np.eye(2)*0.1#(np.pi/10.)**2.# Max distance away, squared
         self.Ts = SIM.ts_control/self.N
 
@@ -177,7 +177,6 @@ class ekf_position:
         self.gps_e_old = 9999
         self.gps_Vg_old = 9999
         self.gps_course_old = 9999
-
 
     def update(self, state, measurement):
         self.propagate_model(state)

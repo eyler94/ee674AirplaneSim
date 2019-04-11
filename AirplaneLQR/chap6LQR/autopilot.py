@@ -59,7 +59,6 @@ class autopilot:
     def update(self, cmd, state):
 
         # lateral autopilot
-        print("\ncourse command:",cmd.course_command)
         r_lat = np.array([[0,cmd.course_command]]).T
         y_lat = np.array([[state.beta,state.psi]]).T
         x_lat = np.array([[state.beta,state.p,state.r,state.phi,state.psi]]).T
