@@ -46,6 +46,7 @@ class mav_dynamics:
         self._beta = 0
         # initialize true_state message
         self.msg_true_state = msg_state()
+        print(MAV.rho*MAV.S_prop*MAV.C_prop*MAV.k_motor**2*3.14346798e-01/MAV.mass)
 
     ###################################
     # public functions

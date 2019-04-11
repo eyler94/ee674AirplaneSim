@@ -30,16 +30,16 @@ class lqr_control:
         self.limit = limit
         self.throttle_flag = throttle_flag
 
-    def update(self, r, y, x, reset_flag=False):
+    def update(self, r, y, x, wrap_flag=False):
 
         error = r-y
-        # if reset_flag is True:
-        #     while error > np.pi:
-        #         # print("Correct positive")
-        #         error = error - 2.*np.pi
-        #     while error <= -np.pi:
-        #         # print("Correct negative")
-        #         error = error + 2.*np.pi
+        if wrap_flag is True:
+            while error.item(1) >= np.pi:
+                # print("Correct positive")
+                error[1,0] = error.item(1) - 2.*np.pi
+            while error.item(1) <= -np.pi:
+                # print("Correct negative")
+                error[1,0] = error.item(1) + 2.*np.pi
         self.integrateError(error)
 
         u_unsat = self.u_eq + self.Kr@(r-self.y_eq) - self.K@(x-self.x_eq) #- self.Ki@(self.int_error)

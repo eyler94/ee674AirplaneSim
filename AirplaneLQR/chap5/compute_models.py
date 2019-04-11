@@ -87,12 +87,16 @@ def compute_ss_model(mav, trim_state, trim_input):
 
     ## Divvy out matrices
     A = T @ Aq @ Tinv
+    A[2,:]=-A[2,:]
     B = T @ Bq
+    B[2,:]=-B[2,:]
 
     A_lat = A[[[4], [9], [11], [6], [8]], [4, 9, 11, 6, 8]]
     B_lat = B[[[4], [9], [11], [6], [8]], [2, 3]]
     A_lon = A[[[3], [5], [10], [7], [2]], [[3, 5, 10, 7, 2]]]
     B_lon = B[[[3], [5], [10], [7], [2]], [0, 1]]
+    # A_lon[4,:]=-A_lon[4,:]
+    # B_lon[4,:]=-B_lon[4,:]
 
     import pandas as pd
     pd.set_option('display.width',320)
