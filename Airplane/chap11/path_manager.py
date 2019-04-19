@@ -25,8 +25,8 @@ class path_manager:
 
     def update(self, waypoints, radius, state):
             # this flag is set for one time step to signal a redraw in the viewer
-            # if self.path.flag_path_changed == True:
-            #     self.path.flag_path_changed = False
+            if self.flag_need_new_waypoints == True:
+                self.flag_need_new_waypoints = False
             if waypoints.num_waypoints == 0:
                 waypoints.flag_manager_requests_waypoints = True
             else:
